@@ -9,3 +9,6 @@ print(grain_df.head())
 
 weather_df = pd.read_csv('en_climate_monthly_SK_estevan.csv')
 print(weather_df.head())
+
+grain_df.info()
+weather_df.info()
