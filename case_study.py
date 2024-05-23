@@ -53,6 +53,9 @@ grain_columns.remove('Chickpeas 1CW - Kabuli 9mm ($ per cwt)')
 grain_columns.remove('Chickpeas 1CW - Desi ($ per cwt)')
 grain_columns.remove('Lentils Small Red ($ per cwt)')
 
+# checking for rows where they are all null
+
+
 # Change grains to yearly
 grain_years = pd.to_datetime(grains_df['Date']).dt.year.rename('year')
 grains_yearly_df = grains_df.groupby(grain_years)[grain_columns].mean().reset_index()
@@ -62,7 +65,23 @@ print(grains_yearly_df.head())
 # Get cpi values per year
 cpi_years = pd.to_datetime(cpi_df['REF_DATE']).dt.year.rename('year')
 cpi_yearly_values_df = cpi_df.groupby(cpi_years)["VALUE"].mean().reset_index()
-print(cpi_yearly_values_df.head())
+print(cpi_yearly_values_df)
+
+# Checking the amount of null values per year to drop extreme rows
+yearly_missing_values = grains_df.groupby(grain_years).apply(lambda x: x.isnull().sum().sum())
+print(yearly_missing_values)
+
+# Calculate the total number of observations per year (rows * columns)
+total_observations_per_year = grains_df.groupby(grain_years).apply(lambda x: x.shape[0] * x.shape[1])
+
+yearly_missing_percentage = (yearly_missing_values/total_observations_per_year) * 100
+print(yearly_missing_percentage)
+
+# Dropping the year 1997 from cpi and grains df
+grains_yearly_df = grains_yearly_df.drop(4)
+cpi_yearly_values_df = cpi_yearly_values_df.drop(4)
+print(grains_yearly_df)
+print(cpi_yearly_values_df)
 
 # Calculate for real prices
 real_grain_columns = ['Real Oats 2CW Price ($ per tonne)', 'CW Feed ($ per tonne)', 'Flax 1CAN ($ per tonne)',
