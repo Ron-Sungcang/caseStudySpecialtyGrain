@@ -54,7 +54,14 @@ grain_columns.remove('Chickpeas 1CW - Desi ($ per cwt)')
 grain_columns.remove('Lentils Small Red ($ per cwt)')
 
 # checking for rows where they are all null
+cols_to_check = grains_df.columns.drop('Date')
+condition = grains_df[cols_to_check].isnull().all(axis=1)
+rows_null=grains_df[condition]
+print("ROWS NULL \n",rows_null)
 
+# Dropping rows that are all null
+grains_df = grains_df.drop(416)
+grains_df = grains_df.drop(521)
 
 # Change grains to yearly
 grain_years = pd.to_datetime(grains_df['Date']).dt.year.rename('year')
@@ -84,13 +91,27 @@ print(grains_yearly_df)
 print(cpi_yearly_values_df)
 
 # Calculate for real prices
-real_grain_columns = ['Real Oats 2CW Price ($ per tonne)', 'CW Feed ($ per tonne)', 'Flax 1CAN ($ per tonne)',
-                      'Canola 1CAN ($ per tonne)',
-                      'Chickpeas 1CW - Kabuli 9mm ($ per cwt)', 'Chickpeas 1CW - Desi ($ per cwt)',
-                      'Field Peas 1CAN - Yellow ($ per bu)',
-                      'Field Peas 1CAN - Green ($ per bu)', 'Field Peas 1CAN - Feed ($ per bu)',
-                      'Canada Canary Seed ($ per cwt)',
-                      'Lentils Small Red ($ per cwt)', 'Lentils Large Green ($ per cwt)',
-                      'Lentils Small Green ($ per cwt)', 'Lentils Medium Green ($ per cwt)',
-                      'Lentils French Green ($ per cwt)', 'Mustard 1CAN - Yellow ($ per cwt)',
-                      'Mustard 1CAN - Brown ($ per cwt)', 'Mustard 1CAN - Oriental ($ per cwt)']
+real_grain_columns = ['Real Oats 2CW Price (2015 $ per tonne)', 'Real CW Feed Price (2015 $ per tonne)',
+                      'Real Flax 1CAN Price (2015 $ per tonne)', 'Real Canola 1CAN Price (2015 $ per tonne)',
+                      'Real Field Peas 1CAN - Yellow Price (2015 $ per bu)',
+                      'Real Field Peas 1CAN - Green Price (2015 $ per bu)', 'Real Field Peas 1CAN - Feed Price (2015 $ per bu)',
+                      'Real Canada Canary Seed Price (2015 $ per cwt)', 'Real Lentils Large Green Price (2015 $ per cwt)',
+                      'Real Lentils Small Green Price (2015 $ per cwt)', 'Real Lentils Medium Green Price (2015 $ per cwt)',
+                      'Real Lentils French Green Price (2015 $ per cwt)', 'Real Mustard 1CAN - Yellow Price (2015 $ per cwt)',
+                      'Real Mustard 1CAN - Brown (2015 $ per cwt) Price', 'Real Mustard 1CAN - Oriental (2015 $ per cwt) Price']
+
+# Selecting a base year for real prices calculations
+base_year = 2015
+base_cpi = cpi_yearly_values_df[cpi_yearly_values_df['year'] == base_year]['VALUE'].values[0]
+merged_df = pd.merge(grains_yearly_df,cpi_yearly_values_df,on='year')
+print("Merged df\n",merged_df)
+
+# Inserting real price columns for each grain
+for real_col,grain_col in zip(real_grain_columns,grain_columns):
+    merged_df[real_col] = merged_df[grain_col] * (base_cpi/merged_df['VALUE'])
+
+print(merged_df)
+
+# inserting new df to db
+merged_df.to_sql("grain_real_prices",con,if_exists='append',index=False)
+
