@@ -18,12 +18,20 @@ cur = con.cursor()
 
 grains_df = pd.read_sql(f'SELECT * FROM {"specialty_grains"}', con)
 cpi_df = pd.read_sql(f'SELECT * FROM {"cpi"}', con)
-# Only pull rows that are between 1993 and 2015
-weather_df = pd.read_sql(f'SELECT * FROM {"historical_weather"} WHERE Year BETWEEN 1993 AND 2015', con)
+# Check the weather table
+cur.execute("PRAGMA table_info(historical_weather)")
+col_info = cur.fetchall()
+col_names = [info[1] for info in col_info]
+print(col_names)
+# Only pull rows that are between 1993 and 2015 and with important columns
+weather_df = pd.read_sql(f'SELECT "Date/Time", Year, "Mean Max Temp (°C)", "Mean Min Temp (°C)", "Mean Temp (°C)", '
+                         f'"Extr Max Temp (°C)", "Extr Min Temp (°C)", "Total Rain (mm)", "Total Snow (cm)", '
+                         f'"Snow Grnd Last Day (cm)", "Spd of Max Gust (km/h)" FROM {"historical_weather"} WHERE Year '
+                         f'BETWEEN 1993 AND 2015', con)
 # checking how many tables in db
 cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
 print(cur.fetchall())
-print("Weather Dataframe\n", weather_df.info())
+print("Weather Dataframe\n", weather_df)
 print("Specialty Grains Dataframe", grains_df.info())
 print("CPI dataframe", cpi_df.info())
 
