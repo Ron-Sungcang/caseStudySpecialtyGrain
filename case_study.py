@@ -254,11 +254,89 @@ fig.legend(loc='upper left', bbox_to_anchor=(0.1,0.9))
 plt.show()
 
 # Line graph for wind over time
+plt.figure(figsize=(10,6))
+plt.plot(weather_yearly_df['Year'], weather_yearly_df['Spd of Max Gust (km/h)'], marker='o', linestyle='-', label='Spd of Max Gust (km/h)')
+
+plt.title('Mean Wind Speed Over Time')
+plt.xlabel('Year')
+plt.ylabel('Speed of Gust (km/h)')
+plt.show()
+
+# Initial visualizations for crop prices
+# initial visualization for crops with $ per tonne
+plt.figure(figsize=(10,6))
+plt.plot(merged_df['Year'], merged_df['Real Oats 2CW Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Oats')
+plt.plot(merged_df['Year'], merged_df['Real CW Feed Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Wheat')
+plt.plot(merged_df['Year'], merged_df['Real Flax 1CAN Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Flax')
+plt.plot(merged_df['Year'], merged_df['Real Canola 1CAN Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Canola')
+
+# Customize the plot
+plt.title('Mean Price Over Time')
+plt.xlabel('Year')
+plt.ylabel('2015 $ per Tonne')
+plt.legend()
+# Display the plot
+plt.show()
+
+# Initial visualization for field peas
+plt.figure(figsize=(10,6))
+plt.plot(merged_df['Year'], merged_df['Real Field Peas 1CAN - Yellow Price (2015 $ per bu)'], marker='o', color='yellow', linestyle='-', label='Yellow')
+plt.plot(merged_df['Year'], merged_df['Real Field Peas 1CAN - Green Price (2015 $ per bu)'], marker='o', color='green', linestyle='-', label='Green')
+plt.plot(merged_df['Year'], merged_df['Real Field Peas 1CAN - Feed Price (2015 $ per bu)'], marker='o', linestyle='-', label='Feed')
+
+# Customize the plot
+plt.title('Mean Price of Peas Over Time')
+plt.xlabel('Year')
+plt.ylabel('2015 $ per Bushel')
+plt.legend()
+# Display the plot
+plt.show()
+
+# Initial visualization for lentils
+plt.figure(figsize=(10,6))
+plt.plot(merged_df['Year'], merged_df['Real Lentils Large Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Large Green')
+plt.plot(merged_df['Year'], merged_df['Real Lentils Small Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Small Green')
+plt.plot(merged_df['Year'], merged_df['Real Lentils Medium Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Medium Green')
+plt.plot(merged_df['Year'], merged_df['Real Lentils French Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='French Green')
+
+# Customize the plot
+plt.title('Mean Price of Lentils Over Time')
+plt.xlabel('Year')
+plt.ylabel('2015 $ per CWT')
+plt.legend()
+
+plt.show()
+
+# Initial visualization for mustard prices
+plt.figure(figsize=(10,6))
+plt.plot(merged_df['Year'], merged_df['Real Mustard 1CAN - Yellow Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Yellow')
+plt.plot(merged_df['Year'], merged_df['Real Mustard 1CAN - Brown (2015 $ per cwt) Price'], marker='o', linestyle='-', label='Brown')
+plt.plot(merged_df['Year'], merged_df['Real Mustard 1CAN - Oriental (2015 $ per cwt) Price'], marker='o', linestyle='-', label='Oriental')
+
+# Customize the plot
+plt.title('Mean Price of Mustard Over Time')
+plt.xlabel('Year')
+plt.ylabel('2015 $ per CWT')
+plt.legend()
+
+plt.show()
+
+# Initial visualization for canary seed
+plt.figure(figsize=(10,6))
+plt.plot(merged_df['Year'], merged_df['Real Canada Canary Seed Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Canary Seed')
+
+plt.title('Mean Price of Canary Seed Over Time')
+plt.xlabel('Year')
+plt.ylabel('2015 $ per CWT')
+plt.legend()
+
+plt.show()
+
 
 # initial visualization to see correlation of mean temp for crop prices
 
 # to provide a more precise analysis I will use a linear regression model
 # Fitting linear regression models
-x_years = weather_df['Years']
+x_years = weather_yearly_df['Year']
 
 # Mean Temp
