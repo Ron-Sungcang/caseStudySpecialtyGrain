@@ -1,8 +1,9 @@
 # Preparing the environment
 import sqlite3 as sql
 import pandas as pd
-import matplotlib as plt
-import datetime as dt
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
 # connect to database
 con = sql.connect("grains.db")
@@ -73,13 +74,13 @@ grains_df = grains_df.drop(416)
 grains_df = grains_df.drop(521)
 
 # Change grains to yearly
-grain_years = pd.to_datetime(grains_df['Date']).dt.year.rename('year')
+grain_years = pd.to_datetime(grains_df['Date']).dt.year.rename('Year')
 grains_yearly_df = grains_df.groupby(grain_years)[grain_columns].mean().reset_index()
 pd.options.display.max_columns = None
 print(grains_yearly_df.head())
 
 # Get cpi values per year
-cpi_years = pd.to_datetime(cpi_df['REF_DATE']).dt.year.rename('year')
+cpi_years = pd.to_datetime(cpi_df['REF_DATE']).dt.year.rename('Year')
 cpi_yearly_values_df = cpi_df.groupby(cpi_years)["VALUE"].mean().reset_index()
 print(cpi_yearly_values_df)
 
@@ -116,8 +117,8 @@ real_grain_columns = ['Real Oats 2CW Price (2015 $ per tonne)', 'Real CW Feed Pr
 
 # Selecting a base year for real prices calculations
 base_year = 2015
-base_cpi = cpi_yearly_values_df[cpi_yearly_values_df['year'] == base_year]['VALUE'].values[0]
-merged_df = pd.merge(grains_yearly_df, cpi_yearly_values_df, on='year')
+base_cpi = cpi_yearly_values_df[cpi_yearly_values_df['Year'] == base_year]['VALUE'].values[0]
+merged_df = pd.merge(grains_yearly_df, cpi_yearly_values_df, on='Year')
 print("Merged df\n", merged_df)
 
 # Inserting real price columns for each grain
@@ -127,7 +128,8 @@ for real_col, grain_col in zip(real_grain_columns, grain_columns):
 print(merged_df)
 
 # inserting new df to db
-merged_df.to_sql("grain_real_prices", con, if_exists='append', index=False)
+#merged_df.to_sql("grain_real_prices", con, if_exists='append', index=False)
+
 
 # Processing the weather dataset
 print("Weather Dataframe\n", weather_df.info())
@@ -189,3 +191,74 @@ weather_missing_values_count = weather_df.isnull().sum()
 print(weather_missing_values_count[:])
 
 print(weather_df.iloc[171])
+
+# Checking how many months in a year
+months_per_year = weather_df.groupby('Year')['Month'].nunique().reset_index(name='UniqueMonths')
+print(months_per_year)
+
+# Group by years for analysis
+weather_columns = ["Mean Max Temp (°C)", "Mean Min Temp (°C)", "Mean Temp (°C)", "Extr Max Temp (°C)", "Extr Min Temp (°C)", "Total Rain (mm)", "Total Snow (cm)", "Snow Grnd Last Day (cm)", "Spd of Max Gust (km/h)"]
+weather_years = pd.to_datetime(weather_df['Date/Time']).dt.year.rename('Year')
+weather_yearly_df = weather_df.groupby(weather_years)[weather_columns].mean().reset_index()
+print(weather_yearly_df)
+
+# Since 1997 was dropped from the grains and cpi df and 2015 only has 2 months in weather
+
+# Drop 1997 from weather yearly df
+weather_yearly_df = weather_yearly_df.drop(4)
+
+# Drop 2015 from the merged df and the weather_df
+weather_yearly_df = weather_yearly_df.drop(22)
+merged_df = merged_df.drop(21)
+merged_df = merged_df.drop(columns=grain_columns)
+
+weather_yearly_df = weather_yearly_df.reset_index(drop=True)
+merged_df = merged_df.reset_index(drop=True)
+print(merged_df)
+print(weather_yearly_df)
+
+# Analyze phase
+
+# visualizing the changes in weather overtime using a line graph for trends overtime
+plt.figure(figsize=(10,6))
+plt.plot(weather_yearly_df['Year'], weather_yearly_df['Mean Temp (°C)'], marker='o', linestyle='-', label='Mean Temp (°C)')
+plt.plot(weather_yearly_df['Year'], weather_yearly_df['Mean Max Temp (°C)'], marker='o', linestyle='-', label='Mean Max Temp (°C)')
+plt.plot(weather_yearly_df['Year'], weather_yearly_df['Mean Min Temp (°C)'], marker='o', linestyle='-', label='Mean Min Temp (°C)')
+print(weather_yearly_df['Year'])
+
+# Customize the plot
+plt.title('Mean Temperature Over Time')
+plt.xlabel('Year')
+plt.ylabel('Temp (°C)')
+plt.legend()
+# Display the plot
+plt.show()
+
+# Line graphs for precipitation
+fig, ax1 = plt.subplots(figsize=(10, 6))
+ax1.plot(weather_yearly_df['Year'], weather_yearly_df['Total Rain (mm)'], marker='o', linestyle='-', label='Total Rain (mm)')
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Rain (mm)', color='blue')
+ax1.tick_params(axis='y', labelcolor='blue')
+
+ax2 = ax1.twinx()
+ax2.plot(weather_yearly_df['Year'], weather_yearly_df['Total Snow (cm)'], marker='o', linestyle='-', color='red', label='Total Snow (cm)')
+ax2.plot(weather_yearly_df['Year'], weather_yearly_df['Snow Grnd Last Day (cm)'], marker='o', linestyle='-',color='green', label='Snow Grnd Last Day (cm)')
+ax2.set_ylabel('Snow (cm)', color='red')
+ax2.tick_params(axis='y', labelcolor='red')
+
+plt.title('Mean Precipitation Over Time')
+fig.tight_layout()
+fig.legend(loc='upper left', bbox_to_anchor=(0.1,0.9))
+
+plt.show()
+
+# Line graph for wind over time
+
+# initial visualization to see correlation of mean temp for crop prices
+
+# to provide a more precise analysis I will use a linear regression model
+# Fitting linear regression models
+x_years = weather_df['Years']
+
+# Mean Temp
