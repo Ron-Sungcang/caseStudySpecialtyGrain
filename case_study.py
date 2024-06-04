@@ -128,7 +128,7 @@ for real_col, grain_col in zip(real_grain_columns, grain_columns):
 print(merged_df)
 
 # inserting new df to db
-#merged_df.to_sql("grain_real_prices", con, if_exists='append', index=False)
+# merged_df.to_sql("grain_real_prices", con, if_exists='append', index=False)
 
 
 # Processing the weather dataset
@@ -144,8 +144,9 @@ print(weather_df[condition])
 
 # Finding all rows with february in the past five years to fill the missing data
 february_value = \
-weather_df[(weather_df['Date/Time'].str.contains('-02')) & (weather_df['Year'] < 2015) & (weather_df['Year'] >= 2011)][
-    "Snow Grnd Last Day (cm)"]
+    weather_df[
+        (weather_df['Date/Time'].str.contains('-02')) & (weather_df['Year'] < 2015) & (weather_df['Year'] >= 2011)][
+        "Snow Grnd Last Day (cm)"]
 average_feb_values = february_value.mean()
 print(average_feb_values)
 weather_df['Snow Grnd Last Day (cm)'].fillna(average_feb_values, inplace=True)
@@ -168,10 +169,12 @@ weather_df['Spd of Max Gust (km/h)'] = pd.to_numeric(weather_df['Spd of Max Gust
 monthly_average = weather_df.groupby('Month')['Spd of Max Gust (km/h)'].mean()
 print(monthly_average)
 
+
 def impute_monthly_average(df, target_col, group_averages):
     """
     Takes a dataframe a target column, and a dataframe of averages per month to impute missing values with seasonal average
     """
+
     # Apply to each row
     def impute_row(row):
         if pd.isnull(row[target_col]):
@@ -184,7 +187,7 @@ def impute_monthly_average(df, target_col, group_averages):
 
 
 # Use the generalized function to impute missing values in 'Spd of Max Gust (km/h)' based on 'Month'
-impute_monthly_average(weather_df, 'Spd of Max Gust (km/h)',monthly_average)
+impute_monthly_average(weather_df, 'Spd of Max Gust (km/h)', monthly_average)
 
 # Checking for null values in the dataset
 weather_missing_values_count = weather_df.isnull().sum()
@@ -197,7 +200,9 @@ months_per_year = weather_df.groupby('Year')['Month'].nunique().reset_index(name
 print(months_per_year)
 
 # Group by years for analysis
-weather_columns = ["Mean Max Temp (°C)", "Mean Min Temp (°C)", "Mean Temp (°C)", "Extr Max Temp (°C)", "Extr Min Temp (°C)", "Total Rain (mm)", "Total Snow (cm)", "Snow Grnd Last Day (cm)", "Spd of Max Gust (km/h)"]
+weather_columns = ["Mean Max Temp (°C)", "Mean Min Temp (°C)", "Mean Temp (°C)", "Extr Max Temp (°C)",
+                   "Extr Min Temp (°C)", "Total Rain (mm)", "Total Snow (cm)", "Snow Grnd Last Day (cm)",
+                   "Spd of Max Gust (km/h)"]
 weather_years = pd.to_datetime(weather_df['Date/Time']).dt.year.rename('Year')
 weather_yearly_df = weather_df.groupby(weather_years)[weather_columns].mean().reset_index()
 print(weather_yearly_df)
@@ -218,125 +223,105 @@ print(merged_df)
 print(weather_yearly_df)
 
 # Analyze phase
+# Columns for weather
+mean_temp_cols = weather_columns[0:3]
+extreme_temp_cols = weather_columns[3:5]
+
+# Columns for grains prices
+price_per_tonnes = real_grain_columns[0:4]
+price_peas_columns = real_grain_columns[4:7]
+price_lentils_columns = real_grain_columns[8:12]
+price_mustard_columns = real_grain_columns[12:15]
+
 
 # visualizing the changes in weather overtime using a line graph for trends overtime
-plt.figure(figsize=(10,6))
-plt.plot(weather_yearly_df['Year'], weather_yearly_df['Mean Temp (°C)'], marker='o', linestyle='-', label='Mean Temp (°C)')
-plt.plot(weather_yearly_df['Year'], weather_yearly_df['Mean Max Temp (°C)'], marker='o', linestyle='-', label='Mean Max Temp (°C)')
-plt.plot(weather_yearly_df['Year'], weather_yearly_df['Mean Min Temp (°C)'], marker='o', linestyle='-', label='Mean Min Temp (°C)')
-print(weather_yearly_df['Year'])
+def plot_trends(df, x_col, y_cols, title, x_label, y_label):
+    plt.figure(figsize=(10, 6))
+    for y in y_cols:
+        plt.plot(df[x_col], df[y], marker='o', linestyle='-', label=y)
 
-# Customize the plot
-plt.title('Mean Temperature Over Time')
-plt.xlabel('Year')
-plt.ylabel('Temp (°C)')
-plt.legend()
-# Display the plot
-plt.show()
+    # Customize the plot
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.legend()
+    # Display the plot
+    plt.show()
+
+
+plot_trends(weather_yearly_df, "Year", mean_temp_cols, "Mean Temp Over Time", "Year", "Temp in Celsius")
+plot_trends(weather_yearly_df, "Year", extreme_temp_cols, "Mean Extreme Temp Over Time", "Year", "Temp in Celsius")
 
 # Line graphs for precipitation
 fig, ax1 = plt.subplots(figsize=(10, 6))
-ax1.plot(weather_yearly_df['Year'], weather_yearly_df['Total Rain (mm)'], marker='o', linestyle='-', label='Total Rain (mm)')
+ax1.plot(weather_yearly_df['Year'], weather_yearly_df['Total Rain (mm)'], marker='o', linestyle='-',
+         label='Total Rain (mm)')
 ax1.set_xlabel('Year')
 ax1.set_ylabel('Rain (mm)', color='blue')
 ax1.tick_params(axis='y', labelcolor='blue')
 
 ax2 = ax1.twinx()
-ax2.plot(weather_yearly_df['Year'], weather_yearly_df['Total Snow (cm)'], marker='o', linestyle='-', color='red', label='Total Snow (cm)')
-ax2.plot(weather_yearly_df['Year'], weather_yearly_df['Snow Grnd Last Day (cm)'], marker='o', linestyle='-',color='green', label='Snow Grnd Last Day (cm)')
+ax2.plot(weather_yearly_df['Year'], weather_yearly_df['Total Snow (cm)'], marker='o', linestyle='-', color='red',
+         label='Total Snow (cm)')
+ax2.plot(weather_yearly_df['Year'], weather_yearly_df['Snow Grnd Last Day (cm)'], marker='o', linestyle='-',
+         color='green', label='Snow Grnd Last Day (cm)')
 ax2.set_ylabel('Snow (cm)', color='red')
 ax2.tick_params(axis='y', labelcolor='red')
 
 plt.title('Mean Precipitation Over Time')
 fig.tight_layout()
-fig.legend(loc='upper left', bbox_to_anchor=(0.1,0.9))
+fig.legend(loc='upper left', bbox_to_anchor=(0.1, 0.9))
 
 plt.show()
 
 # Line graph for wind over time
-plt.figure(figsize=(10,6))
-plt.plot(weather_yearly_df['Year'], weather_yearly_df['Spd of Max Gust (km/h)'], marker='o', linestyle='-', label='Spd of Max Gust (km/h)')
+plot_trends(weather_yearly_df, "Year", ["Spd of Max Gust (km/h)"], "Mean Wind Speed Over Time", "Year", "Wind Speed (km/h)")
 
-plt.title('Mean Wind Speed Over Time')
-plt.xlabel('Year')
-plt.ylabel('Speed of Gust (km/h)')
-plt.show()
 
 # Initial visualizations for crop prices
-# initial visualization for crops with $ per tonne
-plt.figure(figsize=(10,6))
-plt.plot(merged_df['Year'], merged_df['Real Oats 2CW Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Oats')
-plt.plot(merged_df['Year'], merged_df['Real CW Feed Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Wheat')
-plt.plot(merged_df['Year'], merged_df['Real Flax 1CAN Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Flax')
-plt.plot(merged_df['Year'], merged_df['Real Canola 1CAN Price (2015 $ per tonne)'], marker='o', linestyle='-', label='Canola')
 
-# Customize the plot
-plt.title('Mean Price Over Time')
-plt.xlabel('Year')
-plt.ylabel('2015 $ per Tonne')
-plt.legend()
-# Display the plot
-plt.show()
+# initial visualization for crops with $ per tonne
+plot_trends(merged_df,"Year", price_per_tonnes, 'Mean Price Over Time', 'Year', '2015 $ per Tonne')
 
 # Initial visualization for field peas
-plt.figure(figsize=(10,6))
-plt.plot(merged_df['Year'], merged_df['Real Field Peas 1CAN - Yellow Price (2015 $ per bu)'], marker='o', color='yellow', linestyle='-', label='Yellow')
-plt.plot(merged_df['Year'], merged_df['Real Field Peas 1CAN - Green Price (2015 $ per bu)'], marker='o', color='green', linestyle='-', label='Green')
-plt.plot(merged_df['Year'], merged_df['Real Field Peas 1CAN - Feed Price (2015 $ per bu)'], marker='o', linestyle='-', label='Feed')
-
-# Customize the plot
-plt.title('Mean Price of Peas Over Time')
-plt.xlabel('Year')
-plt.ylabel('2015 $ per Bushel')
-plt.legend()
-# Display the plot
-plt.show()
+plot_trends(merged_df,"Year", price_peas_columns, "Mean Price of Peas Over Time", "Year", "2015 $ per bu")
 
 # Initial visualization for lentils
-plt.figure(figsize=(10,6))
-plt.plot(merged_df['Year'], merged_df['Real Lentils Large Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Large Green')
-plt.plot(merged_df['Year'], merged_df['Real Lentils Small Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Small Green')
-plt.plot(merged_df['Year'], merged_df['Real Lentils Medium Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Medium Green')
-plt.plot(merged_df['Year'], merged_df['Real Lentils French Green Price (2015 $ per cwt)'], marker='o', linestyle='-', label='French Green')
-
-# Customize the plot
-plt.title('Mean Price of Lentils Over Time')
-plt.xlabel('Year')
-plt.ylabel('2015 $ per CWT')
-plt.legend()
-
-plt.show()
+plot_trends(merged_df,"Year",price_lentils_columns,"Mean Price of Lentils Over Time", "Year", "2015 $ per cwt")
 
 # Initial visualization for mustard prices
-plt.figure(figsize=(10,6))
-plt.plot(merged_df['Year'], merged_df['Real Mustard 1CAN - Yellow Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Yellow')
-plt.plot(merged_df['Year'], merged_df['Real Mustard 1CAN - Brown (2015 $ per cwt) Price'], marker='o', linestyle='-', label='Brown')
-plt.plot(merged_df['Year'], merged_df['Real Mustard 1CAN - Oriental (2015 $ per cwt) Price'], marker='o', linestyle='-', label='Oriental')
-
-# Customize the plot
-plt.title('Mean Price of Mustard Over Time')
-plt.xlabel('Year')
-plt.ylabel('2015 $ per CWT')
-plt.legend()
-
-plt.show()
+plot_trends(merged_df, "Year", price_mustard_columns, "Mean Price of Mustard Over Time", "Year", "2015 $ per cwt")
 
 # Initial visualization for canary seed
-plt.figure(figsize=(10,6))
-plt.plot(merged_df['Year'], merged_df['Real Canada Canary Seed Price (2015 $ per cwt)'], marker='o', linestyle='-', label='Canary Seed')
+plot_trends(merged_df, "Year", ["Real Canada Canary Seed Price (2015 $ per cwt)"], "Mean Price of Canary Seeds Over Time", "Year", "2015 $ per cwt")
 
-plt.title('Mean Price of Canary Seed Over Time')
-plt.xlabel('Year')
-plt.ylabel('2015 $ per CWT')
-plt.legend()
-
-plt.show()
 
 
 # initial visualization to see correlation of mean temp for crop prices
 
+# Since the other columns are variable in the weather dataset other than temp I will be focusing on the temps
 # to provide a more precise analysis I will use a linear regression model
-# Fitting linear regression models
-x_years = weather_yearly_df['Year']
+# Fitting linear regression models using a function
+def linear_regression_plot(df, x_col, y_col, title, label):
+    plt.figure(figsize=(10, 6))
+    for y in y_col:
+        x_years = df[[x_col]]
+        y_mean_temp = df[y]
+        model_mean = LinearRegression().fit(x_years, y_mean_temp)
+        trend_mean = model_mean.predict(x_years)
+
+        plt.plot(x_years, y_mean_temp, marker='o', linestyle='-', label=y)
+        plt.plot(df[x_col], trend_mean, linestyle='--')
+
+    plt.title(title)
+    plt.xlabel(x_col)
+    plt.ylabel(label)
+    plt.legend()
+    plt.show()
+
+
+linear_regression_plot(weather_yearly_df, 'Year', mean_temp_cols, "Mean Temp Over Time", "Mean Temp (°C)")
+linear_regression_plot(weather_yearly_df,"Year", extreme_temp_cols,"Mean Extreme Temp Over Time", "Temp (°C)")
 
 # Mean Temp
+print(price_mustard_columns)
